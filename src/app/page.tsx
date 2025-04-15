@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react';
-import { ArrowUpIcon, ArrowDownIcon, UserPlusIcon, StarIcon } from '@heroicons/react/24/outline';
+import { ArrowDownIcon, ArrowUpIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { useEffect, useState } from 'react';
 
 interface User {
   id: string;

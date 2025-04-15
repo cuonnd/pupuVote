@@ -6,7 +6,6 @@ export async function POST(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = params;
     const { voteType } = await request.json();
     
     // Ví dụ code cập nhật vote trong database
