@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react';
-import { PlusIcon, UserPlusIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
 
 interface User {
   id?: string;

@@ -47,6 +47,7 @@ export async function POST(request: Request) {
       user: newUser,
     });
   } catch (error) {
+    console.error('Error processing POST request:', error);
     return NextResponse.json({ error: 'Dữ liệu gửi lên không hợp lệ' }, { status: 400 });
   }
 }
