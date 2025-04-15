@@ -1,9 +1,9 @@
 'use client'
-import { ArrowDownIcon, ArrowUpIcon, PlusIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon, UserPlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 
 interface User {
-  id?: string;
+  userId?: string;
   name: string;
   img: string;
   desc: string;
@@ -20,22 +20,23 @@ export default function HomePage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch('/api/users');
-        const data = await res.json();
-        if (res.ok) {
-          setUsers(data.users || []);
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải dữ liệu:', error);
-      }
-    };
-    
     fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (res.ok) {
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải dữ liệu:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -50,40 +51,120 @@ export default function HomePage() {
     setIsLoading(true);
     
     try {
+      const method = editingUserId ? 'PUT' : 'POST';
+      const body = editingUserId 
+        ? JSON.stringify({ ...formData, userId: editingUserId })
+        : JSON.stringify(formData);
+      
       const res = await fetch('/api/users', {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body,
       });
       const result = await res.json();
       
       if (res.ok) {
-        setUsers(prev => [...prev, result.user]);
-        setFormData({ name: '', img: '', desc: '', vote: 0 });
-        setIsFormOpen(false);
+        if (editingUserId) {
+          // Nếu đang chỉnh sửa, cập nhật user trong danh sách
+          setUsers(prev => prev.map(user => 
+            user.userId === editingUserId ? result.user : user
+          ));
+        } else {
+          // Nếu thêm mới, thêm user vào danh sách
+          setUsers(prev => [...prev, result.user]);
+        }
+        resetForm();
       } else {
-        alert(result.error || 'Có lỗi xảy ra khi thêm user');
+        alert(result.error || 'Có lỗi xảy ra khi xử lý user');
       }
     } catch (error) {
       console.error('Lỗi:', error);
-      alert('Có lỗi xảy ra khi thêm user');
+      alert('Có lỗi xảy ra khi xử lý user');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const incrementVote = (index: number) => {
-    const updatedUsers = [...users];
-    updatedUsers[index].vote += 1;
-    setUsers(updatedUsers);
-    // Thực tế sẽ cần gửi request API để cập nhật vote
+  const resetForm = () => {
+    setFormData({ name: '', img: '', desc: '', vote: 0 });
+    setEditingUserId(null);
+    setIsFormOpen(false);
   };
 
-  const decrementVote = (index: number) => {
-    const updatedUsers = [...users];
-    updatedUsers[index].vote -= 1;
-    setUsers(updatedUsers);
-    // Thực tế sẽ cần gửi request API để cập nhật vote
+  const handleEdit = (user: User) => {
+    setFormData({
+      name: user.name,
+      img: user.img,
+      desc: user.desc,
+      vote: user.vote
+    });
+    setEditingUserId(user.userId!);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa user này?')) return;
+    
+    try {
+      const res = await fetch(`/api/users?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      
+      if (res.ok) {
+        setUsers(prev => prev.filter(user => user.userId !== userId));
+        alert('Đã xóa user thành công');
+      } else {
+        alert(result.error || 'Có lỗi xảy ra khi xóa user');
+      }
+    } catch (error) {
+      console.error('Lỗi khi xóa user:', error);
+      alert('Có lỗi xảy ra khi xóa user');
+    }
+  };
+
+  const incrementVote = async (index: number) => {
+    const user = users[index];
+    const updatedVote = {...user, vote: user.vote + 1};
+    try {
+      const res = await fetch(`/api/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedVote),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        const updatedUsers = [...users];
+        updatedUsers[index] = result.user;
+        setUsers(updatedUsers);
+      } else {
+        alert(result.error || 'Có lỗi khi cập nhật vote');
+      }
+    } catch (error) {
+      console.error('Lỗi khi cập nhật vote:', error);
+    }
+  };
+  
+  const decrementVote = async (index: number) => {
+    const user = users[index];
+    const updatedVote = {...user, vote: user.vote - 1};
+    try {
+      const res = await fetch(`/api/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedVote),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        const updatedUsers = [...users];
+        updatedUsers[index] = result.user;
+        setUsers(updatedUsers);
+      } else {
+        alert(result.error || 'Có lỗi khi cập nhật vote');
+      }
+    } catch (error) {
+      console.error('Lỗi khi cập nhật vote:', error);
+    }
   };
 
   return (
@@ -100,10 +181,16 @@ export default function HomePage() {
 
         <div className="mb-10 flex justify-end">
           <button
-            onClick={() => setIsFormOpen(!isFormOpen)}
+            onClick={() => {
+              if (isFormOpen && editingUserId) {
+                resetForm();
+              } else {
+                setIsFormOpen(!isFormOpen);
+              }
+            }}
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg"
           >
-            {isFormOpen ? 'Đóng form' : (
+            {isFormOpen ? (editingUserId ? 'Hủy chỉnh sửa' : 'Đóng form') : (
               <>
                 <UserPlusIcon className="h-5 w-5 mr-2" />
                 <span>Thêm User mới</span>
@@ -115,8 +202,17 @@ export default function HomePage() {
         {isFormOpen && (
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-10 transform transition-all duration-300 ease-in-out">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <PlusIcon className="h-6 w-6 text-indigo-500 mr-2" />
-              Thêm User mới
+              {editingUserId ? (
+                <>
+                  <PencilIcon className="h-6 w-6 text-indigo-500 mr-2" />
+                  Chỉnh sửa User
+                </>
+              ) : (
+                <>
+                  <PlusIcon className="h-6 w-6 text-indigo-500 mr-2" />
+                  Thêm User mới
+                </>
+              )}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -173,7 +269,7 @@ export default function HomePage() {
               <div className="flex justify-end pt-4">
                 <button 
                   type="button" 
-                  onClick={() => setIsFormOpen(false)}
+                  onClick={resetForm}
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg mr-3 hover:bg-gray-50 transition-colors"
                 >
                   Hủy
@@ -183,7 +279,7 @@ export default function HomePage() {
                   disabled={isLoading}
                   className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg disabled:opacity-70"
                 >
-                  {isLoading ? 'Đang xử lý...' : 'Thêm User'}
+                  {isLoading ? 'Đang xử lý...' : (editingUserId ? 'Cập nhật User' : 'Thêm User')}
                 </button>
               </div>
             </form>
@@ -259,6 +355,24 @@ export default function HomePage() {
                           <ArrowDownIcon className="h-5 w-5" />
                         </button>
                       </div>
+                    </div>
+
+                    {/* Actions Buttons */}
+                    <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="flex items-center mr-3 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user.userId!)}
+                        className="flex items-center px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" />
+                        Xóa
+                      </button>
                     </div>
                   </div>
                 </div>

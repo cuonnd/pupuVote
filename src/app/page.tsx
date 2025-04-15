@@ -45,6 +45,7 @@ export default function HomePage() {
       setVotedUsers(JSON.parse(savedVotes));
     }
   }, []);
+  console.log("user",users)
 
   const handleVote = async (userId: string, voteType: 'up' | 'down') => {
     // Kiểm tra xem user này đã vote chưa
@@ -100,7 +101,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-600">User Rankings</h1>
           <a 
-            href="/admin" 
+            href="/dashboard" 
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
           >
             <UserPlusIcon className="h-5 w-5 mr-2" />
@@ -159,14 +160,14 @@ export default function HomePage() {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <span className="font-medium text-gray-700 mr-2">Votes:</span>
+                        {/* <span className="font-medium text-gray-700 mr-2">Votes:</span>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           user.vote > 0 ? 'bg-green-100 text-green-700' : 
                           user.vote < 0 ? 'bg-red-100 text-red-700' : 
                           'bg-gray-100 text-gray-700'
                         }`}>
                           {user.vote}
-                        </span>
+                        </span> */}
                       </div>
                       
                       <div className="flex space-x-2">
