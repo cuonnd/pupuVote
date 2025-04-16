@@ -1,14 +1,5 @@
 "use client";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  UserPlusIcon,
-} from "@heroicons/react/24/outline";
-import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../../lib/firebaseClient";
 
 interface User {
   userId: string;
@@ -17,9 +8,39 @@ interface User {
   desc: string;
   vote: number;
 }
+const fakeData: User[] = [
+  {
+    userId: "Eqk3zl06FHJeNTa3xUbm",
+    desc: "",
+    vote: 45,
+    img: "https://media-public.canva.com/rItvc/MAE-SCrItvc/1/t.png",
+    name: "CÁ SẤU MÙA HÈ",
+  },
+  {
+    userId: "UKstBSuOsRL518rJsy8l",
+    vote: 22,
+    desc: "",
+    img: "https://media-public.canva.com/VHt0s/MAEwhYVHt0s/1/t.png",
+    name: "LANG THANG CHOCOPIE",
+  },
+  {
+    userId: "O6zSMUO3LhBPcDn52wXp",
+    img: "https://media-public.canva.com/MADityCxTpw/1/thumbnail.png",
+    desc: "",
+    name: "LỢN RỪNG CHU ĐÁO",
+    vote: 20,
+  },
 
-export default function HomePage() {
-  const [users, setUsers] = useState<User[]>([]);
+  {
+    userId: "8BzJEUBaPLdAdqhewsXz",
+    desc: "",
+    vote: 6,
+    name: "TỀ THIÊN ĐẠI THÁNH",
+    img: "https://res.cloudinary.com/dpm8bchys/image/upload/v1744735898/eyo5y4kmnus5x6ee5wdl.png",
+  },
+];
+export default function ReportPage() {
+  const [users, setUsers] = useState<User[]>(fakeData);
   const [isLoading, setIsLoading] = useState(true);
   const [selected, setSelected] = useState<string>();
   const [hasVoted, setHasVoted] = useState(false);
@@ -31,14 +52,14 @@ export default function HomePage() {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch("/api/users");
-        const data = await res.json();
-        if (res.ok) {
-          setUsers(data.users || []);
-          // Sắp xếp theo vote nếu cần
-          // const sortedUsers = [...data.users].sort((a, b) => b.vote - a.vote);
-          // setUsers(sortedUsers);
-        }
+        // const res = await fetch("/api/users");
+        // const data = await res.json();
+        // if (res.ok) {
+        // setUsers(data.users || []);
+        // Sắp xếp theo vote nếu cần
+        const sortedUsers = [...fakeData].sort((a, b) => b.vote - a.vote);
+        // setUsers(sortedUsers);
+        // }
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
       } finally {
@@ -110,9 +131,10 @@ export default function HomePage() {
       console.error("Lỗi khi bình chọn:", error);
     }
   };
+
   useEffect(() => {
     const controlHeader = () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // Kiểm tra hướng scroll
         if (window.scrollY > lastScrollY && window.scrollY > 100) {
           // Scroll xuống và đã scroll quá 100px
@@ -127,14 +149,14 @@ export default function HomePage() {
     };
 
     // Thêm event listener khi component mount
-    if (typeof window !== 'undefined') {
-      window.addEventListener('scroll', controlHeader);
+    if (typeof window !== "undefined") {
+      window.addEventListener("scroll", controlHeader);
     }
 
     // Cleanup event listener khi component unmount
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('scroll', controlHeader);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("scroll", controlHeader);
       }
     };
   }, [lastScrollY]);
@@ -146,13 +168,13 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <header 
+          <header
             className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-4 transition-transform duration-300 ${
-              showHeader ? 'transform-none' : 'transform -translate-y-full'
+              showHeader ? "transform-none" : "transform -translate-y-full"
             }`}
           >
-            <div className="text-2xl font-bold text-amber-700 bg-white bg-opacity-80 px-6 py-2 rounded-full shadow-md">
-              CỔNG BÌNH CHỌN
+            <div className="text-[35px] font-bold text-amber-700 bg-white bg-opacity-80 px-6 py-2 rounded-full shadow-md">
+              KẾT QUẢ BÌNH CHỌN
             </div>
           </header>
 
@@ -178,12 +200,14 @@ export default function HomePage() {
                       </h2>
                     </div>
                     <button
-                      onClick={() =>{handleVote(character.userId, index)}}
+                      onClick={() => {
+                        handleVote(character.userId, index);
+                      }}
                       disabled={hasVoted}
                       className={`bg-[#86b186] hover:bg-green-500 text-white font-bold py-2 px-8 rounded-[12] mb-4 opacity-100
                       `}
                     >
-                      {selected === character.userId ? "ĐÃ CHỌN" : "BÌNH CHỌN"}
+                      {character?.vote + " %"}
                     </button>
                     <div className="h-32 w-32 sm:h-40 sm:w-40 mb-4">
                       <img

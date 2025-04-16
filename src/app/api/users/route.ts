@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/firebaseClient";
+
 import {
   collection,
   getDocs,
@@ -9,6 +10,8 @@ import {
   updateDoc,
   query,
   orderBy,
+  setDoc,
+  getDoc 
 } from "firebase/firestore";
 
 type User = {
@@ -111,5 +114,38 @@ export async function DELETE(request: Request) {
   return NextResponse.json({
     message: "User đã được xóa thành công",
     userId,
+  });
+}
+export async function GET_STATUS() {
+  const statusRef = doc(db, "appStatus", "homeControl");
+  const snapshot = await getDoc(statusRef);
+  const data = snapshot.data();
+
+  return NextResponse.json({
+    shouldRedirect: data?.shouldRedirect ?? false,
+    updatedAt: data?.updatedAt ?? null,
+  });
+}
+
+// ✅ PUT: Thay đổi trạng thái đóng/mở
+export async function PUT_STATUS(request: Request) {
+  const body = await request.json();
+  const { shouldRedirect } = body;
+
+  if (typeof shouldRedirect !== "boolean") {
+    return NextResponse.json(
+      { error: "Trường shouldRedirect phải là boolean" },
+      { status: 400 }
+    );
+  }
+
+  await setDoc(doc(db, "appStatus", "homeControl"), {
+    shouldRedirect,
+    updatedAt: Date.now(),
+  });
+
+  return NextResponse.json({
+    message: `Đã cập nhật trạng thái: ${shouldRedirect ? "Đóng" : "Mở"}`,
+    shouldRedirect,
   });
 }
