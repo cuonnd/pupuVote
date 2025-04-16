@@ -1,6 +1,15 @@
-// app/api/users/route.ts
-
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { db } from "../../../../lib/firebaseClient";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  query,
+  orderBy,
+} from "firebase/firestore";
 
 type User = {
   userId: string;
@@ -10,124 +19,97 @@ type User = {
   vote: number;
 };
 
-// Biến lưu dữ liệu tạm thời cho danh sách user
-// (Lưu ý: dữ liệu in-memory chỉ dùng cho demo, không an toàn cho production)
-let users: User[] = [];
+const usersCollection = collection(db, "users");
 
-/**
- * API GET: Lấy danh sách các user
- */
+// GET: Lấy danh sách user
 export async function GET() {
+  const q = query(usersCollection, orderBy("vote", "desc"));
+  const snapshot = await getDocs(q);
+
+  const users: User[] = snapshot.docs.map((doc) => ({
+    userId: doc.id,
+    ...(doc.data() as Omit<User, "userId">),
+  }));
+
   return NextResponse.json({ users });
 }
 
-/**
- * API POST: Lưu 1 user mới
- * Yêu cầu request có body dạng JSON chứa các trường name, img, desc, vote.
- */
+// POST: Tạo user mới
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    
-    // Kiểm tra dữ liệu hợp lệ (bạn có thể mở rộng kiểm tra theo yêu cầu)
-    if (!body.name) {
-      return NextResponse.json({ error: 'Thiếu trường name' }, { status: 400 });
-    }
-    
-    const newUser: User = {
-      userId: Date.now().toString(),
-      name: body.name,
-      img: body.img || '',
-      desc: body.desc || '',
-      vote: body.vote ? Number(body.vote) : 0,
-    };
+  const body = await request.json();
 
-    users.push(newUser);
-
-    return NextResponse.json({
-      message: 'User đã được thêm thành công',
-      user: newUser,
-    });
-  } catch (error) {
-    console.error('Error processing POST request:', error);
-    return NextResponse.json({ error: 'Dữ liệu gửi lên không hợp lệ' }, { status: 400 });
+  if (!body.name) {
+    return NextResponse.json({ error: "Thiếu trường name" }, { status: 400 });
   }
+
+  const docRef = await addDoc(usersCollection, {
+    name: body.name,
+    img: body.img || "",
+    desc: body.desc || "",
+    vote: body.vote ? Number(body.vote) : 0,
+  });
+
+  return NextResponse.json({
+    message: "User đã được thêm thành công",
+    user: { userId: docRef.id, ...body },
+  });
 }
 
+// PUT: Cập nhật hoặc tạo mới user
 export async function PUT(request: Request) {
+  const body = await request.json();
+
+  if (!body.userId) {
+    return NextResponse.json({ error: "Thiếu trường userId" }, { status: 400 });
+  }
+
+  const userRef = doc(db, "users", body.userId);
+
   try {
-    const body = await request.json();
-    
-    if (!body.userId) {
-      return NextResponse.json({ error: 'Thiếu trường userId' }, { status: 400 });
-    }
-    
-    const userIndex = users.findIndex(user => user.userId === body.userId);
-    
-    if (userIndex === -1) {
-      // Thêm user mới nếu không tìm thấy
-      const newUser: User = {
-        userId: body.userId,
-        name: body.name || '',
-        img: body.img || '',
-        desc: body.desc || '',
-        vote: body.vote ? Number(body.vote) : 0,
-      };
-      
-      users.push(newUser);
-      
-      return NextResponse.json({
-        message: 'Đã tạo user mới',
-        user: newUser
-      });
-    }
-    
-    // Cập nhật thông tin user nếu tìm thấy
-    const updatedUser = {
-      ...users[userIndex],
-      name: body.name || users[userIndex].name,
-      img: body.img !== undefined ? body.img : users[userIndex].img,
-      desc: body.desc !== undefined ? body.desc : users[userIndex].desc,
-      vote: body.vote !== undefined ? Number(body.vote) : users[userIndex].vote
-    };
-    
-    users[userIndex] = updatedUser;
-    
-    return NextResponse.json({
-      message: 'User đã được cập nhật thành công',
-      user: updatedUser
+    await updateDoc(userRef, {
+      name: body.name,
+      img: body.img,
+      desc: body.desc,
+      vote: body.vote,
     });
-  } catch (error) {
-    console.error('Error processing PUT request:', error);
-    return NextResponse.json({ error: 'Dữ liệu gửi lên không hợp lệ' }, { status: 400 });
+
+    return NextResponse.json({
+      message: "User đã được cập nhật",
+      user: { ...body },
+    });
+  } catch (err) {
+    // Nếu không tồn tại, tạo mới
+    await addDoc(usersCollection, {
+      name: body.name || "",
+      img: body.img || "",
+      desc: body.desc || "",
+      vote: body.vote || 0,
+    });
+
+    return NextResponse.json({
+      message: "User mới đã được tạo",
+      user: body,
+    });
   }
 }
 
-/**
- * API DELETE: Xóa user theo userId
- */
+// DELETE: Xóa user theo userId
 export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Thiếu tham số userId' }, { status: 400 });
-    }
-    
-    const initialLength = users.length;
-    users = users.filter(user => user.userId !== userId);
-    
-    if (users.length === initialLength) {
-      return NextResponse.json({ error: 'Không tìm thấy user' }, { status: 404 });
-    }
-    
-    return NextResponse.json({
-      message: 'User đã được xóa thành công',
-      userId
-    });
-  } catch (error) {
-    console.error('Error processing DELETE request:', error);
-    return NextResponse.json({ error: 'Lỗi khi xử lý yêu cầu xóa' }, { status: 500 });
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Thiếu tham số userId" },
+      { status: 400 }
+    );
   }
+
+  const userRef = doc(db, "users", userId);
+  await deleteDoc(userRef);
+
+  return NextResponse.json({
+    message: "User đã được xóa thành công",
+    userId,
+  });
 }
