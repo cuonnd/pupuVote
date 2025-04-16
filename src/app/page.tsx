@@ -112,7 +112,7 @@ export default function HomePage() {
   };
   useEffect(() => {
     const controlHeader = () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // Kiểm tra hướng scroll
         if (window.scrollY > lastScrollY && window.scrollY > 100) {
           // Scroll xuống và đã scroll quá 100px
@@ -127,14 +127,14 @@ export default function HomePage() {
     };
 
     // Thêm event listener khi component mount
-    if (typeof window !== 'undefined') {
-      window.addEventListener('scroll', controlHeader);
+    if (typeof window !== "undefined") {
+      window.addEventListener("scroll", controlHeader);
     }
 
     // Cleanup event listener khi component unmount
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('scroll', controlHeader);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("scroll", controlHeader);
       }
     };
   }, [lastScrollY]);
@@ -146,9 +146,9 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <header 
+          <header
             className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-4 transition-transform duration-300 ${
-              showHeader ? 'transform-none' : 'transform -translate-y-full'
+              showHeader ? "transform-none" : "transform -translate-y-full"
             }`}
           >
             <div className="text-2xl font-bold text-amber-700 bg-white bg-opacity-80 px-6 py-2 rounded-full shadow-md">
@@ -178,7 +178,9 @@ export default function HomePage() {
                       </h2>
                     </div>
                     <button
-                      onClick={() =>{handleVote(character.userId, index)}}
+                      onClick={() => {
+                        handleVote(character.userId, index);
+                      }}
                       disabled={hasVoted}
                       className={`bg-[#86b186] hover:bg-green-500 text-white font-bold py-2 px-8 rounded-[12] mb-4 opacity-100
                       `}
@@ -198,6 +200,13 @@ export default function HomePage() {
             </div>
           </main>
         </>
+      )}
+      {hasVoted && (
+        <div className="fixed inset-0 bg-[#27645baf] bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white text-amber-700 text-2xl font-semibold px-10 py-6 rounded-2xl shadow-2xl animate-fadeIn">
+            Cảm ơn đã bình chọn!
+          </div>
+        </div>
       )}
     </div>
   );
