@@ -82,7 +82,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <header className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-600">User Rankings</h1>
@@ -96,7 +96,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="relative min-h-screen px-4 py-8">
+      <main className="px-4 py-8">
         {/* Background image */}
         <img
           className="object-cover fixed top-0 left-0 h-full w-full z-0"
